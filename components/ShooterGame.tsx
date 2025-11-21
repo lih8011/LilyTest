@@ -60,9 +60,13 @@ export const ShooterGame: React.FC<ShooterGameProps> = ({
   // --- Audio Helpers ---
   useEffect(() => {
     // Init Audio Context for SFX
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioContext) {
-        audioCtxRef.current = new AudioContext();
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+          audioCtxRef.current = new AudioContext();
+      }
+    } catch (e) {
+      console.warn("AudioContext not supported or blocked", e);
     }
 
     // Init TTS
@@ -78,8 +82,8 @@ export const ShooterGame: React.FC<ShooterGameProps> = ({
     
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
-      if (audioCtxRef.current) {
-          audioCtxRef.current.close();
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+          audioCtxRef.current.close().catch(() => {});
       }
     };
   }, []);
@@ -87,6 +91,11 @@ export const ShooterGame: React.FC<ShooterGameProps> = ({
   const playLaserSound = () => {
       if (!audioCtxRef.current) return;
       try {
+          // Resume context if suspended (common browser policy)
+          if (audioCtxRef.current.state === 'suspended') {
+              audioCtxRef.current.resume();
+          }
+
           const ctx = audioCtxRef.current;
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();

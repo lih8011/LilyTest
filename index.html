@@ -6,6 +6,15 @@
     <title>LinguaFlow Starfield</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+      // Polyfill for process.env to prevent crashes in browser
+      window.process = {
+        env: {
+          NODE_ENV: 'development',
+          API_KEY: '' // Will default to empty, triggering mock mode
+        }
+      };
+    </script>
+    <script>
       tailwind.config = {
         theme: {
           extend: {

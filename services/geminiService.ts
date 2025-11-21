@@ -10,14 +10,31 @@ Your task is to generate vocabulary pairs for a typing game.
 4. Ensure the English is all lowercase unless it's a proper noun.
 `;
 
+const MOCK_DATA: VocabPair[] = [
+  { id: '1', chinese: "你好", english: "hello", errorCount: 0 },
+  { id: '2', chinese: "世界", english: "world", errorCount: 0 },
+  { id: '3', chinese: "電腦", english: "computer", errorCount: 0 },
+  { id: '4', chinese: "貓", english: "cat", errorCount: 0 },
+  { id: '5', chinese: "狗", english: "dog", errorCount: 0 },
+  { id: '6', chinese: "書", english: "book", errorCount: 0 },
+  { id: '7', chinese: "水", english: "water", errorCount: 0 },
+  { id: '8', chinese: "火", english: "fire", errorCount: 0 },
+  { id: '9', chinese: "樹", english: "tree", errorCount: 0 },
+  { id: '10', chinese: "車", english: "car", errorCount: 0 },
+];
+
 export const generateVocabulary = async (topicContext: string): Promise<VocabPair[]> => {
   try {
-    if (!process.env.API_KEY) {
-      console.warn("API Key not found, returning mock data for development.");
-      throw new Error("API Key missing");
+    // Safety check for process.env to avoid crashes in browser if polyfill missing
+    const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : null;
+
+    if (!apiKey) {
+      console.warn("API Key not found, using mock data.");
+      // Return mock data immediately without throwing
+      return Promise.resolve(MOCK_DATA);
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
 
     // Requesting 10 items, which will result in 20 questions total
     const response = await ai.models.generateContent({
@@ -56,18 +73,7 @@ export const generateVocabulary = async (topicContext: string): Promise<VocabPai
     }));
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return [
-        { id: '1', chinese: "你好", english: "hello", errorCount: 0 },
-        { id: '2', chinese: "世界", english: "world", errorCount: 0 },
-        { id: '3', chinese: "電腦", english: "computer", errorCount: 0 },
-        { id: '4', chinese: "貓", english: "cat", errorCount: 0 },
-        { id: '5', chinese: "狗", english: "dog", errorCount: 0 },
-        { id: '6', chinese: "書", english: "book", errorCount: 0 },
-        { id: '7', chinese: "水", english: "water", errorCount: 0 },
-        { id: '8', chinese: "火", english: "fire", errorCount: 0 },
-        { id: '9', chinese: "樹", english: "tree", errorCount: 0 },
-        { id: '10', chinese: "車", english: "car", errorCount: 0 },
-    ];
+    console.error("Gemini API Error (Falling back to mock):", error);
+    return MOCK_DATA;
   }
 };
